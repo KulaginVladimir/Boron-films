@@ -1,0 +1,14 @@
+name: boron-films-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python<3.13
+  - fenics-dolfinx
+  - festim=2.1
+  - matplotlib
+  - scipy
+  - numpy
+  - ipykernel
+  - pip:
+    - h_transport_materials
