@@ -25,6 +25,11 @@ source "$HOME/anaconda3/etc/profile.d/conda.sh"
 conda activate boron-films-env
 
 N_TRAPS="$1"
+CACHE_ROOT="${SLURM_TMPDIR:-/tmp/${USER}}/festim_cache_${SLURM_JOB_ID}"
+
+mkdir -p "${CACHE_ROOT}/xdg"
+export XDG_CACHE_HOME="${CACHE_ROOT}/xdg"
+trap 'rm -rf "${CACHE_ROOT}"' EXIT
 
 echo "Job ID: ${SLURM_JOB_ID}"
 echo "Node: $(hostname)"
