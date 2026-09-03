@@ -224,7 +224,7 @@ def residual(x):
                 fractions=fractions,
                 energies=energies,
                 Kr0=Kr0,
-                Er=Er,
+                E_r=Er,
                 Tf=Tf_fit,
             )
 
@@ -254,7 +254,7 @@ def evaluate(x):
             fractions=fractions,
             energies=energies,
             Kr0=Kr0,
-            Er=Er,
+            E_r=Er,
             Tf=Tf_fit,
         )
 
