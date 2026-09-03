@@ -9,6 +9,3 @@ dependencies:
   - matplotlib
   - scipy
   - numpy
-  - ipykernel
-  - pip:
-    - h_transport_materials

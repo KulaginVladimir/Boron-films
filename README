@@ -2,6 +2,72 @@
 
 ## Overview
 
-This repository contains scripts to reproduce the simulation results of deuterium TDS-spectra from B-D co-deposited films.
+This repository contains experimental data and FESTIM 2.1 scripts used to model deuterium thermal desorption spectra from B-D co-deposited films.
 
-WIP
+Five TDS spectra measured for different film thicknesses and heating rates are fitted simultaneously using a common set of effective trapping states. The initial deuterium inventory for each experiment is determined independently from the corresponding experimental TDS integral.
+
+The repository contains scripts to reproduce the parameter fitting and the calculated TDS spectra used for comparison with the experimental data.
+
+## Repository structure
+
+```text
+experimental_data/
+    Raw experimental TDS spectra and experiment metadata.
+
+calculated_spectra/
+    Calculated spectra for the final four-state model.
+
+fit_TDS/
+    tds_model.py            FESTIM forward model
+    fit.py                  simultaneous fitting of the TDS spectra
+    run_fit_parallel.sh     Slurm script for parallel fitting
+
+compare_TDS.py
+    Recalculates the final spectra when requested and produces the
+    experiment/model comparison figure.
+
+environment.yml
+    Conda environment used for the calculations.
+```
+
+## Installation
+
+Clone the repository:
+```bash
+git clone <repository-url>
+cd Boron-films
+```
+
+Create and activate the Conda environment:
+```bash
+conda env create -f environment.yml
+conda activate boron-films-env
+```
+
+## TDS fitting
+The simultaneous fit can be performed using either three or four effective trapping states.
+
+For a local run:
+```bash
+python fit_TDS/fit.py 3
+python fit_TDS/fit.py 4
+```
+
+For a parallel run on a cluster with the Slurm job manager:
+```bash
+sbatch fit_TDS/run_fit_parallel.sh 3
+sbatch fit_TDS/run_fit_parallel.sh 4
+```
+
+## TDS comparison
+The final four-state parameters are used by ``compare_TDS.py`` to reproduce the calculated spectra and compare them with the experimental measurements.
+
+To generate the comparison figure from the spectra already stored in ``calculated_spectra/``:
+```bash
+python compare_TDS.py
+```
+
+To recalculate all spectra with FESTIM and overwrite the stored calculated spectra:
+```bash
+python compare_TDS.py --recalculate
+```
