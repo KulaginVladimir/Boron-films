@@ -21,7 +21,7 @@ export PYTHONUNBUFFERED=1
 
 cd "${SLURM_SUBMIT_DIR}"
 
-source "$HOME/anaconda3/bin/activate"
+source "$HOME/anaconda3/etc/profile.d/conda.sh"
 conda activate boron-films-env
 
 N_TRAPS="$1"
