@@ -18,9 +18,11 @@ calculated_spectra/
     Calculated spectra for the final four-state model.
 
 fit_TDS/
-    tds_model.py            FESTIM forward model
-    fit.py                  simultaneous fitting of the TDS spectra
-    run_fit_parallel.sh     Slurm script for parallel fitting
+    tds_model.py                  FESTIM forward model
+    fit.py                        Simultaneous fitting of the TDS spectra
+    run_fit_parallel.sh           Slurm script for parallel fitting
+    sensitivity.py                Sensitivity analysis
+    run_sensitivity_parallel.sh   Slurm array script for sensitivity analysis
 
 compare_TDS.py
     Recalculates the final spectra when requested and produces the
@@ -59,10 +61,19 @@ sbatch fit_TDS/run_fit_parallel.sh 3
 sbatch fit_TDS/run_fit_parallel.sh 4
 ```
 
-## TDS comparison
-The final four-state parameters are used by ``compare_TDS.py`` to reproduce the calculated spectra and compare them with the experimental measurements.
+## Sensitivity tests
 
-To generate the comparison figure from the spectra already stored in ``calculated_spectra/``:
+The robustness of the four-state solution with respect to the fixed trapping and detrapping kinetic prefactors can be tested by repeating the full fit for different values of `k0` and `p0`.
+
+To perform a sensitivity analysis, submit the Slurm array:
+```bash
+sbatch fit_TDS/run_sensitivity_parallel.sh
+```
+
+## TDS comparison
+The final four-state parameters are used by `compare_TDS.py` to reproduce the calculated spectra and compare them with the experimental measurements.
+
+To generate the comparison figure from the spectra already stored in `calculated_spectra/`:
 ```bash
 python compare_TDS.py
 ```

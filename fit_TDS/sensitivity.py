@@ -29,7 +29,7 @@ def main():
     parser.add_argument("p0", type=float)
     args = parser.parse_args()
 
-    fit_base.n_traps = 4
+    fit_base.N_traps = 4
     fit_base.experiments = fit_base.load_experiments()
     fit_base.n_residuals = sum(
         len(experiment["T"]) for experiment in fit_base.experiments
