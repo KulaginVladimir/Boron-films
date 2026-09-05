@@ -31,9 +31,8 @@ n_workers = int(os.environ.get("SLURM_CPUS_PER_TASK", os.cpu_count() or 1))
 experiments = None
 n_residuals = None
 N_traps = None
+surface_model = None
 
-# Starting points are intentionally chosen away from the reported optimum
-# to test convergence of the fit rather than restart from the final solution.
 starts = {
     3: {
         "fractions": np.array([0.60, 0.10, 0.30]),
@@ -47,6 +46,29 @@ starts = {
         "Kr0": 1.0e-25,
         "Er": 0.80,
     },
+    5: {
+        "fractions": np.array(
+            [0.19070939, 0.27484574, 0.27484573, 0.16451335, 0.09508579]
+        ),
+        "energies": np.array([0.92443877, 1.07, 1.19, 1.32677295, 1.62738778]),
+        "Kr0": 2.69456812e-25,
+        "Er": 0.84338380,
+    },
+    6: {
+        "fractions": np.array(
+            [0.12654303, 0.16581731, 0.22846126, 0.22846125, 0.15936622, 0.09135093]
+        ),
+        "energies": np.array(
+            [0.91480892, 1.05522346, 1.15, 1.25, 1.41705683, 1.73039792]
+        ),
+        "Kr0": 1.39328729e-23,
+        "Er": 0.99708420,
+    },
+}
+
+sink_start = {
+    "fractions": np.array([0.30, 0.20, 0.20, 0.15, 0.15]),
+    "energies": np.array([1.00, 1.30, 1.60, 2.00, 2.35]),
 }
 
 
@@ -130,21 +152,26 @@ def load_experiments():
     return out
 
 
-def init_worker(experiments_local, n_residuals_local, N_traps_local):
+def init_worker(
+    experiments_local,
+    n_residuals_local,
+    N_traps_local,
+    surface_model_local,
+):
     """Initialize shared read-only data in each multiprocessing worker."""
-    global experiments, n_residuals, N_traps
+    global experiments, n_residuals, N_traps, surface_model
     experiments = experiments_local
     n_residuals = n_residuals_local
     N_traps = N_traps_local
+    surface_model = surface_model_local
 
 
 def make_x0(start):
-    """
-    Convert physical starting parameters to optimization coordinates:
-    softmax logits, detrapping energies, log10(Kr0), and Er.
-    """
     fractions = start["fractions"]
     logits = np.log(fractions[:-1] / fractions[-1])
+
+    if surface_model == "sink":
+        return np.r_[logits, start["energies"]]
 
     return np.r_[
         logits,
@@ -161,15 +188,15 @@ def bounds():
     lower = np.r_[
         np.full(n_logits, -12.0),
         np.full(N_traps, 0.60),
-        -30.0,
-        0.0,
     ]
     upper = np.r_[
         np.full(n_logits, 12.0),
         np.full(N_traps, 2.50),
-        -20.0,
-        1.50,
     ]
+
+    if surface_model == "arrhenius":
+        lower = np.r_[lower, -30.0, 0.0]
+        upper = np.r_[upper, -16.0, 1.50]
 
     return lower, upper
 
@@ -182,9 +209,11 @@ def diff_step(x):
     absolute = np.r_[
         np.full(N_traps - 1, 2.0e-3),
         np.full(N_traps, 5.0e-4),
-        2.0e-3,
-        5.0e-4,
     ]
+
+    if surface_model == "arrhenius":
+        absolute = np.r_[absolute, 2.0e-3, 5.0e-4]
+
     return absolute / np.maximum(np.abs(x), 1.0e-2)
 
 
@@ -199,6 +228,10 @@ def parameters(x):
 
     fractions = softmax(np.r_[x[:n_logits], 0.0])
     energies = np.asarray(x[n_logits : n_logits + N_traps])
+
+    if surface_model == "sink":
+        return fractions, energies, 0.0, 0.0
+
     Kr0 = 10.0 ** float(x[n_logits + N_traps])
     Er = float(x[n_logits + N_traps + 1])
 
@@ -226,10 +259,10 @@ def residual(x):
                 Kr0=Kr0,
                 E_r=Er,
                 Tf=Tf_fit,
+                surface_model=surface_model,
             )
 
             delta = np.interp(experiment["T"], temperature, flux) - experiment["J"]
-            # Pointwise form of the normalized temperature-integrated L2 error.
             parts.append(delta * experiment["scale"])
 
         return np.concatenate(parts)
@@ -256,6 +289,7 @@ def evaluate(x):
             Kr0=Kr0,
             E_r=Er,
             Tf=Tf_fit,
+            surface_model=surface_model,
         )
 
         delta = np.interp(experiment["T"], temperature, flux) - experiment["J"]
@@ -270,18 +304,29 @@ def evaluate(x):
 
 def main():
     """Run the simultaneous TDS fit."""
-    global experiments, n_residuals, N_traps
+    global experiments, n_residuals, N_traps, surface_model
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("N_traps", type=int, choices=(3, 4))
+    parser.add_argument("N_traps", type=int)
+    parser.add_argument("surface_model", nargs="?", default="arrhenius")
     args = parser.parse_args()
 
     N_traps = args.N_traps
+    surface_model = args.surface_model
+
     experiments = load_experiments()
     n_residuals = sum(len(experiment["T"]) for experiment in experiments)
 
-    x0 = make_x0(starts[N_traps])
+    start = sink_start if surface_model == "sink" else starts[N_traps]
+
+    x0 = make_x0(start)
     lower, upper = bounds()
+
+    print(f"Surface model: {surface_model}")
+    print(f"N traps: {N_traps}")
+    print(f"Free parameters: {len(x0)}")
+    print(f"Workers: {n_workers}")
+    print()
 
     context = mp.get_context("spawn")
 
@@ -289,10 +334,8 @@ def main():
         max_workers=n_workers,
         mp_context=context,
         initializer=init_worker,
-        initargs=(experiments, n_residuals, N_traps),
+        initargs=(experiments, n_residuals, N_traps, surface_model),
     ) as executor:
-        # Three-point finite differences are evaluated in parallel over the
-        # process pool supplied through the SciPy workers interface.
         fit = least_squares(
             residual,
             x0,
@@ -321,8 +364,13 @@ def main():
     print("fractions =", np.array2string(fractions, precision=8))
     print("energies  =", np.array2string(energies, precision=8))
     print("dE        =", np.array2string(np.diff(energies), precision=8))
-    print(f"Kr0       = {Kr0:.8e} m4/s")
-    print(f"Er        = {Er:.8f} eV")
+
+    if surface_model == "sink":
+        print("surface   = c_m(0,t) = 0")
+    else:
+        print(f"Kr0       = {Kr0:.8e} m4/s")
+        print(f"Er        = {Er:.8f} eV")
+
     print(f"objective = {objective:.8e}")
     print(f"SciPy cost= {0.5 * objective:.8e}")
     print(f"mean L1   = {np.mean(errors):.8f}")

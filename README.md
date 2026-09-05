@@ -6,8 +6,6 @@ This repository contains experimental data and FESTIM 2.1 scripts used to model 
 
 Five TDS spectra measured for different film thicknesses and heating rates are fitted simultaneously using a common set of effective trapping states. The initial deuterium inventory for each experiment is determined independently from the corresponding experimental TDS integral.
 
-The repository contains scripts to reproduce the parameter fitting and the calculated TDS spectra used for comparison with the experimental data.
-
 ## Repository structure
 
 ```text
@@ -15,7 +13,7 @@ experimental_data/
     Raw experimental TDS spectra and experiment metadata.
 
 calculated_spectra/
-    Calculated spectra for the final four-state model.
+    Calculated spectra for the final five-state model and the ideal-sink case.
 
 fit_TDS/
     tds_model.py                  FESTIM forward model
@@ -47,33 +45,49 @@ conda activate boron-films-env
 ```
 
 ## TDS fitting
-The simultaneous fit can be performed using either three or four effective trapping states.
+
+The thermally activated surface model can be fitted using three to six effective trapping states.
 
 For a local run:
 ```bash
 python fit_TDS/fit.py 3
 python fit_TDS/fit.py 4
+python fit_TDS/fit.py 5
+python fit_TDS/fit.py 6
 ```
 
-For a parallel run on a cluster with the Slurm job manager:
+For a parallel run on a cluster with Slurm:
 ```bash
 sbatch fit_TDS/run_fit_parallel.sh 3
 sbatch fit_TDS/run_fit_parallel.sh 4
+sbatch fit_TDS/run_fit_parallel.sh 5
+sbatch fit_TDS/run_fit_parallel.sh 6
+```
+
+The ideal-sink limit is fitted for the selected five-state model:
+
+```bash
+python fit_TDS/fit.py 5 sink
+```
+
+or similar on the cluster:
+
+```bash
+sbatch fit_TDS/run_fit_parallel.sh 5 sink
 ```
 
 ## Sensitivity tests
 
-The robustness of the four-state solution with respect to the fixed trapping and detrapping kinetic prefactors can be tested by repeating the full fit for different values of `k0` and `p0`.
+The robustness of the five-state solution with respect to the fixed trapping and detrapping kinetic prefactors can be tested by repeating the full fit for different values of `k0` and `p0`.
 
-To perform a sensitivity analysis, submit the Slurm array:
+To perform the sensitivity analysis, submit the Slurm array:
 ```bash
 sbatch fit_TDS/run_sensitivity_parallel.sh
 ```
 
 ## TDS comparison
-The final four-state parameters are used by `compare_TDS.py` to reproduce the calculated spectra and compare them with the experimental measurements.
 
-To generate the comparison figure from the spectra already stored in `calculated_spectra/`:
+`compare_TDS.py` compares the experimental spectra with the numerical results produced by the considered models. To generate the comparison figure from the spectra already stored in `calculated_spectra/`:
 ```bash
 python compare_TDS.py
 ```

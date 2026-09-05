@@ -24,6 +24,7 @@ def simulate_TDS(
     E_r,
     Tf,
     return_trap_contribution=False,
+    surface_model="arrhenius",
 ):
     kr0_festim = Kr0 / 2
 
@@ -76,8 +77,14 @@ def simulate_TDS(
         for i in range(n_traps)
     ]
 
-    model.boundary_conditions = [
-        F.SurfaceReactionBC(
+    if surface_model == "sink":
+        left_bc = F.FixedConcentrationBC(
+            subdomain=left,
+            value=0.0,
+            species=mobile,
+        )
+    else:
+        left_bc = F.SurfaceReactionBC(
             reactant=[mobile, mobile],
             gas_pressure=0.0,
             k_r0=kr0_festim,
@@ -85,7 +92,10 @@ def simulate_TDS(
             k_d0=0.0,
             E_kd=0.0,
             subdomain=left,
-        ),
+        )
+
+    model.boundary_conditions = [
+        left_bc,
         F.ParticleFluxBC(
             subdomain=right,
             value=0.0,
@@ -101,6 +111,7 @@ def simulate_TDS(
         final_time=(Tf - T0) / beta,
         max_iterations=50,
     )
+
     model.settings.stepsize = F.Stepsize(
         initial_value=0.01,
         growth_factor=1.2,

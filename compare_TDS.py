@@ -12,10 +12,13 @@ area = 1.0e-4
 Tf_fit = 1100.0
 Tf_plot = 1300.0
 
-fractions = np.array([0.19070939, 0.54969147, 0.16451335, 0.09508579])
-energies = np.array([0.92443877, 1.13050166, 1.32677295, 1.62738778])
-Kr0 = 2.69456812e-25
-E_r = 0.84338380
+fractions = np.array([0.12654304, 0.16581731, 0.45692251, 0.15936622, 0.09135092])
+energies = np.array([0.91480893, 1.05522347, 1.20260982, 1.41705684, 1.73039792])
+Kr0 = 1.39328746e-23
+E_r = 0.99708420
+
+sink_fractions = np.array([0.13816642, 0.22944871, 0.36937497, 0.15742860, 0.10558130])
+sink_energies = np.array([1.28625148, 1.50171091, 1.69711525, 1.99016510, 2.43786185])
 
 base = Path(__file__).resolve().parent
 experimental_data = base / "experimental_data"
@@ -97,7 +100,8 @@ for i, (ax, experiment) in enumerate(zip(axes[:5], experiments)):
 
         T_calc = calculated["T_K"]
         J_calc = calculated["J_calc"]
-        release = [calculated[f"J_trap{j + 1}"] for j in range(4)]
+        J_sink = calculated["J_sink"]
+        release = [calculated[f"J_trap{j + 1}"] for j in range(5)]
     else:
         inventory = get_inventory(data, thickness)
 
@@ -111,10 +115,24 @@ for i, (ax, experiment) in enumerate(zip(axes[:5], experiments)):
             E_r=E_r,
             Tf=Tf_plot,
             return_trap_contribution=True,
+            surface_model="arrhenius",
+        )
+
+        T_sink_model, J_sink_model = simulate_TDS(
+            beta=beta,
+            thickness=thickness,
+            inventory=inventory,
+            fractions=sink_fractions,
+            energies=sink_energies,
+            Kr0=0.0,
+            E_r=0.0,
+            Tf=Tf_plot,
+            surface_model="sink",
         )
 
         T_calc = T_exp
         J_calc = np.interp(T_exp, T_model, J_model)
+        J_sink = np.interp(T_exp, T_sink_model, J_sink_model)
 
         release = [
             np.interp(T_exp, T_model[1:], contribution)
@@ -123,9 +141,9 @@ for i, (ax, experiment) in enumerate(zip(axes[:5], experiments)):
 
         np.savetxt(
             spectrum_file,
-            np.column_stack((T_exp, J_exp, J_calc, *release)),
+            np.column_stack((T_exp, J_exp, J_calc, J_sink, *release)),
             delimiter=",",
-            header="T_K,J_exp,J_calc,J_trap1,J_trap2,J_trap3,J_trap4",
+            header=("T_K,J_exp,J_calc,J_sink,J_trap1,J_trap2,J_trap3,J_trap4,J_trap5"),
             comments="",
         )
 
@@ -135,19 +153,34 @@ for i, (ax, experiment) in enumerate(zip(axes[:5], experiments)):
         np.abs(J_calc[mask_fit] - J_exp[mask_fit]), T_exp[mask_fit]
     ) / np.trapezoid(np.abs(J_exp[mask_fit]), T_exp[mask_fit])
 
+    sink_error = np.trapezoid(
+        np.abs(J_sink[mask_fit] - J_exp[mask_fit]), T_exp[mask_fit]
+    ) / np.trapezoid(np.abs(J_exp[mask_fit]), T_exp[mask_fit])
+
     ax.plot(
         T_calc,
         J_calc,
-        linewidth=1.9,
-        label="calculated",
+        linewidth=1.5,
+        label="Finite-rate desorption",
         zorder=4,
     )
     ax.plot(
         T_exp,
         J_exp,
-        linewidth=1.6,
-        label="experiment",
-        zorder=5,
+        linewidth=3,
+        label="Experiment",
+        color="tab:red",
+        alpha=0.65,
+        zorder=0,
+    )
+    ax.plot(
+        T_calc,
+        J_sink,
+        linewidth=1.5,
+        linestyle="--",
+        label="Instantaneous desorption",
+        color="black",
+        zorder=3,
     )
 
     for j, contribution in enumerate(release):
@@ -171,7 +204,9 @@ for i, (ax, experiment) in enumerate(zip(axes[:5], experiments)):
     ax.text(
         0.97,
         0.95,
-        rf"$\mathrm{{err}}={error:.3f}$",
+        rf"$\mathrm{{err}}={error:.3f}$"
+        "\n"
+        rf"$\mathrm{{err}}_{{\rm sink}}={sink_error:.3f}$",
         transform=ax.transAxes,
         ha="right",
         va="top",
@@ -209,7 +244,7 @@ fig.legend(
     labels,
     loc="upper center",
     bbox_to_anchor=(0.5, 0.985),
-    ncol=6,
+    ncol=4,
     frameon=False,
     columnspacing=1.3,
     handlelength=2.0,
@@ -219,7 +254,7 @@ fig.subplots_adjust(
     left=0.075,
     right=0.985,
     bottom=0.10,
-    top=0.84,
+    top=0.80,
     wspace=0.28,
     hspace=0.38,
 )

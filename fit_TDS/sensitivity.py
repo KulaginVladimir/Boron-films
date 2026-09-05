@@ -10,15 +10,15 @@ import tds_model
 
 
 nominal_start = {
-    "fractions": np.array([0.19070939, 0.54969147, 0.16451335, 0.09508579]),
-    "energies": np.array([0.92443877, 1.13050166, 1.32677295, 1.62738778]),
-    "Kr0": 2.69456812e-25,
-    "Er": 0.84338380,
+    "fractions": np.array([0.12654303, 0.16581731, 0.45692251, 0.15936622, 0.09135092]),
+    "energies": np.array([0.91480892, 1.05522346, 1.20260982, 1.41705683, 1.73039792]),
+    "Kr0": 1.39328729e-23,
+    "Er": 0.99708420,
 }
 
 
 def init_worker(experiments, n_residuals, k0_fixed, p0_fixed):
-    fit_base.init_worker(experiments, n_residuals, 4)
+    fit_base.init_worker(experiments, n_residuals, 5, "arrhenius")
     tds_model.k0 = k0_fixed
     tds_model.p0 = p0_fixed
 
@@ -29,7 +29,8 @@ def main():
     parser.add_argument("p0", type=float)
     args = parser.parse_args()
 
-    fit_base.N_traps = 4
+    fit_base.N_traps = 5
+    fit_base.surface_model = "arrhenius"
     fit_base.experiments = fit_base.load_experiments()
     fit_base.n_residuals = sum(
         len(experiment["T"]) for experiment in fit_base.experiments
@@ -41,7 +42,7 @@ def main():
     x0 = fit_base.make_x0(nominal_start)
     lower, upper = fit_base.bounds()
 
-    print("Sensitivity fit: four-state model")
+    print("Sensitivity fit: five-state model")
     print(f"k0 = {args.k0:.8e} m3/s")
     print(f"p0 = {args.p0:.8e} s^-1")
     print()
