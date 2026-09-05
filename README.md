@@ -22,9 +22,15 @@ fit_TDS/
     sensitivity.py                Sensitivity analysis
     run_sensitivity_parallel.sh   Slurm array script for sensitivity analysis
 
-compare_TDS.py
-    Recalculates the final spectra when requested and produces the
-    experiment/model comparison figure.
+results/
+    calculated_spectra/           Final calculated TDS spectra
+    model_order.csv               Model-order and ideal-sink fit metrics
+    sensitivity.csv               Results of the sensitivity analysis
+    compare_TDS.py                Experimental/model TDS comparison
+    plot_surface_pivot.py         Pivot analysis of fitted recombination rates
+    tds_comparison.png            Final TDS comparison figure
+    surface_pivot.png             Pivot plot of fitted recombination rates
+    README.md                     Description of the stored results
 
 environment.yml
     Conda environment used for the calculations.
@@ -85,14 +91,26 @@ To perform the sensitivity analysis, submit the Slurm array:
 sbatch fit_TDS/run_sensitivity_parallel.sh
 ```
 
-## TDS comparison
+The final fitted parameters from this analysis are stored in `results/sensitivity.csv`.
 
-`compare_TDS.py` compares the experimental spectra with the numerical results produced by the considered models. To generate the comparison figure from the spectra already stored in `calculated_spectra/`:
+## Results
+
+To generate the TDS comparison from the spectra stored in `results/calculated_spectra/`:
+
 ```bash
-python compare_TDS.py
+python results/compare_TDS.py
 ```
 
-To recalculate all spectra with FESTIM and overwrite the stored calculated spectra:
+To recalculate the final spectra with FESTIM and overwrite the stored calculated spectra:
+
 ```bash
-python compare_TDS.py --recalculate
+python results/compare_TDS.py --recalculate
 ```
+
+The surface-rate Arrhenius family derived from the sensitivity results can be analysed with:
+
+```bash
+python results/plot_surface_pivot.py
+```
+
+The numerical results used for the model-order, surface-boundary, and sensitivity analyses are documented in `results/README.md`.

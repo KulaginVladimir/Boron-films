@@ -1,0 +1,6 @@
+n_traps,surface_model,n_parameters,objective,mean_L1
+3,arrhenius,7,8.86626536e-03,0.06822958
+4,arrhenius,9,5.26469432e-03,0.05249362
+5,arrhenius,11,4.23763216e-03,0.04750600
+6,arrhenius,13,4.05893247e-03,0.04629062
+5,sink,9,3.70157537e-02,0.14184105

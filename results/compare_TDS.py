@@ -1,9 +1,16 @@
 import argparse
 import csv
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+results = Path(__file__).resolve().parent
+repo = results.parent
+
+sys.path.insert(0, str(repo))
 
 from fit_TDS.tds_model import T0, n_B, simulate_TDS
 
@@ -20,10 +27,9 @@ E_r = 0.99708420
 sink_fractions = np.array([0.13816642, 0.22944871, 0.36937497, 0.15742860, 0.10558130])
 sink_energies = np.array([1.28625148, 1.50171091, 1.69711525, 1.99016510, 2.43786185])
 
-base = Path(__file__).resolve().parent
-experimental_data = base / "experimental_data"
+experimental_data = repo / "experimental_data"
 experiments_file = experimental_data / "experiments_5.csv"
-calculated_spectra = base / "calculated_spectra"
+calculated_spectra = results / "calculated_spectra"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--recalculate", action="store_true")
@@ -260,7 +266,7 @@ fig.subplots_adjust(
 )
 
 fig.savefig(
-    base / "tds_comparison.png",
+    results / "tds_comparison.png",
     dpi=300,
     bbox_inches="tight",
     pad_inches=0.04,
