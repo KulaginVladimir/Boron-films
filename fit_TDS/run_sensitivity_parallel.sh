@@ -6,37 +6,56 @@
 #SBATCH --cpus-per-task=20
 #SBATCH --mem=20G
 #SBATCH --time=300:00:00
-#SBATCH --array=0-8
+#SBATCH --array=0-10
 #SBATCH --output=sensitivity_%A_%a.out
 #SBATCH --error=sensitivity_%A_%a.err
 
 set -euo pipefail
 
-k0_values=(
-    1.53187207e-17
-    1.53187207e-17
-    1.53187207e-17
-    1.53187207e-16
-    1.53187207e-16
-    1.53187207e-16
-    1.53187207e-15
-    1.53187207e-15
-    1.53187207e-15
+D0_values=(
+    7.78e-7
+    7.78e-7
+    7.78e-7
+    7.78e-8
+    7.78e-8
+    7.78e-8
+    7.78e-7
+    7.78e-7
+    7.78e-6
+    7.78e-6
+    7.78e-6
+)
+
+ED_values=(
+    0.49023
+    0.49023
+    0.49023
+    0.39023
+    0.49023
+    0.59023
+    0.39023
+    0.59023
+    0.39023
+    0.49023
+    0.59023
 )
 
 p0_values=(
     1.0e12
     1.0e13
     1.0e14
-    1.0e12
     1.0e13
-    1.0e14
-    1.0e12
     1.0e13
-    1.0e14
+    1.0e13
+    1.0e13
+    1.0e13
+    1.0e13
+    1.0e13
+    1.0e13
 )
 
-k0="${k0_values[$SLURM_ARRAY_TASK_ID]}"
+D0="${D0_values[$SLURM_ARRAY_TASK_ID]}"
+E_D="${ED_values[$SLURM_ARRAY_TASK_ID]}"
 p0="${p0_values[$SLURM_ARRAY_TASK_ID]}"
 
 cd "${SLURM_SUBMIT_DIR}"
@@ -60,7 +79,8 @@ echo "Job ID: ${SLURM_JOB_ID}"
 echo "Array task: ${SLURM_ARRAY_TASK_ID}"
 echo "Node: $(hostname)"
 echo "CPUs: ${SLURM_CPUS_PER_TASK}"
-echo "k0: ${k0} m3/s"
+echo "D0: ${D0} m2/s"
+echo "E_D: ${E_D} eV"
 echo "p0: ${p0} s^-1"
 
-srun --mpi=none --ntasks=1 --cpus-per-task="${SLURM_CPUS_PER_TASK}" --cpu-bind=cores python -u fit_TDS/sensitivity.py "${k0}" "${p0}"
+srun --mpi=none --ntasks=1 --cpus-per-task="${SLURM_CPUS_PER_TASK}" --cpu-bind=cores python -u fit_TDS/sensitivity.py "${D0}" "${E_D}" "${p0}"

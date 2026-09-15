@@ -17,15 +17,23 @@ nominal_start = {
 }
 
 
-def init_worker(experiments, n_residuals, k0_fixed, p0_fixed):
+def set_fixed_parameters(D0, E_D, p0):
+    tds_model.D0 = D0
+    tds_model.E_D = E_D
+    tds_model.k0 = D0 / (tds_model.lambda_B**2 * tds_model.n_B)
+    tds_model.E_k = E_D
+    tds_model.p0 = p0
+
+
+def init_worker(experiments, n_residuals, D0, E_D, p0):
     fit_base.init_worker(experiments, n_residuals, 5, "arrhenius")
-    tds_model.k0 = k0_fixed
-    tds_model.p0 = p0_fixed
+    set_fixed_parameters(D0, E_D, p0)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("k0", type=float)
+    parser.add_argument("D0", type=float)
+    parser.add_argument("E_D", type=float)
     parser.add_argument("p0", type=float)
     args = parser.parse_args()
 
@@ -36,19 +44,20 @@ def main():
         len(experiment["T"]) for experiment in fit_base.experiments
     )
 
-    tds_model.k0 = args.k0
-    tds_model.p0 = args.p0
+    set_fixed_parameters(args.D0, args.E_D, args.p0)
 
     x0 = fit_base.make_x0(nominal_start)
     lower, upper = fit_base.bounds()
 
-    print("Sensitivity fit: five-state model")
-    print(f"k0 = {args.k0:.8e} m3/s")
+    print("Sensitivity fit: five-trap model")
+    print(f"D0 = {args.D0:.8e} m2/s")
+    print(f"E_D = {args.E_D:.8f} eV")
+    print(f"k0 = {tds_model.k0:.8e} m3/s")
+    print(f"E_k = {tds_model.E_k:.8f} eV")
     print(f"p0 = {args.p0:.8e} s^-1")
     print()
 
     context = mp.get_context("spawn")
-
     with ProcessPoolExecutor(
         max_workers=fit_base.n_workers,
         mp_context=context,
@@ -56,7 +65,8 @@ def main():
         initargs=(
             fit_base.experiments,
             fit_base.n_residuals,
-            args.k0,
+            args.D0,
+            args.E_D,
             args.p0,
         ),
     ) as executor:
@@ -77,6 +87,8 @@ def main():
             workers=executor.map,
         )
 
+    set_fixed_parameters(args.D0, args.E_D, args.p0)
+
     objective, errors = fit_base.evaluate(result.x)
     fractions, energies, Kr0, Er = fit_base.parameters(result.x)
 
@@ -85,7 +97,10 @@ def main():
     energies = energies[order]
 
     print()
-    print("k0        =", f"{args.k0:.8e} m3/s")
+    print("D0        =", f"{args.D0:.8e} m2/s")
+    print("E_D       =", f"{args.E_D:.8f} eV")
+    print("k0        =", f"{tds_model.k0:.8e} m3/s")
+    print("E_k       =", f"{tds_model.E_k:.8f} eV")
     print("p0        =", f"{args.p0:.8e} s^-1")
     print("fractions =", np.array2string(fractions, precision=8))
     print("energies  =", np.array2string(energies, precision=8))
