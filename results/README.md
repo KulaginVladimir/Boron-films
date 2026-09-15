@@ -6,7 +6,7 @@ This directory contains the numerical results used in the analysis of the TDS mo
 
 - `calculated_spectra/` — final calculated spectra for the five-trap finite-rate model and the ideal-sink approximation. The files also contain the release contributions associated with the five traps.
 - `model_order.csv` — fit-quality metrics for the three-, four-, five-, and six-trap finite-rate models and the five-trap ideal-sink case.
-- `sensitivity.csv` — fitted parameters from the sensitivity analysis. 
+- `sensitivity.csv` — fitted parameters from the sensitivity analysis.
 - `compare_TDS.py` — generates the experimental/model TDS comparison from the stored spectra and can optionally recalculate the spectra with FESTIM.
 - `plot_Kr.py` — plots the temperature-dependent surface recombination coefficient obtained for all sensitivity cases.
 - `tds_comparison.png` — final comparison of the experimental and calculated TDS spectra.

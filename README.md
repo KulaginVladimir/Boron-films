@@ -81,7 +81,7 @@ sbatch fit_TDS/run_fit_parallel.sh 5 sink
 
 ## Sensitivity tests
 
-The robustness of the five-trap solution with respect to the fixed trapping and detrapping kinetic prefactors can be tested by repeating the full fit for different values of `p0`, `D0`, `Ed`.
+The robustness of the five-trap solution with respect to the fixed detrapping and transport parameters is tested by repeating the full fit for different values of `p0`, `D0`, and `E_D`.
 
 To perform the sensitivity analysis, submit the Slurm array:
 ```bash
