@@ -4,7 +4,7 @@
 
 This repository contains experimental data and FESTIM 2.1 scripts used to model deuterium thermal desorption spectra from B-D co-deposited films.
 
-Five TDS spectra measured for different film thicknesses and heating rates are fitted simultaneously using a common set of effective trapping states. The initial deuterium inventory for each experiment is determined independently from the corresponding experimental TDS integral.
+Five TDS spectra measured for different film thicknesses and heating rates are fitted simultaneously using a common set of effective traps. The initial deuterium inventory for each experiment is determined independently from the corresponding experimental TDS integral.
 
 ## Repository structure
 
@@ -12,11 +12,8 @@ Five TDS spectra measured for different film thicknesses and heating rates are f
 experimental_data/
     Raw experimental TDS spectra and experiment metadata.
 
-calculated_spectra/
-    Calculated spectra for the final five-state model and the ideal-sink case.
-
 fit_TDS/
-    tds_model.py                  FESTIM forward model
+    tds_model.py                  FESTIM model
     fit.py                        Simultaneous fitting of the TDS spectra
     run_fit_parallel.sh           Slurm script for parallel fitting
     sensitivity.py                Sensitivity analysis
@@ -27,9 +24,9 @@ results/
     model_order.csv               Model-order and ideal-sink fit metrics
     sensitivity.csv               Results of the sensitivity analysis
     compare_TDS.py                Experimental/model TDS comparison
-    plot_surface_pivot.py         Pivot analysis of fitted recombination rates
+    plot_Kr.py                    Surface recombination coefficients from sensitivity fits
     tds_comparison.png            Final TDS comparison figure
-    surface_pivot.png             Pivot plot of fitted recombination rates
+    Kr_dependencies.png           Surface recombination coefficients for sensitivity fits
     README.md                     Description of the stored results
 
 environment.yml
@@ -52,7 +49,7 @@ conda activate boron-films-env
 
 ## TDS fitting
 
-The thermally activated surface model can be fitted using three to six effective trapping states.
+The thermally activated surface model can be fitted using three to six effective trapping sites.
 
 For a local run:
 ```bash
@@ -70,7 +67,7 @@ sbatch fit_TDS/run_fit_parallel.sh 5
 sbatch fit_TDS/run_fit_parallel.sh 6
 ```
 
-The ideal-sink limit is fitted for the selected five-state model:
+The ideal-sink limit is fitted for the selected five-trap model:
 
 ```bash
 python fit_TDS/fit.py 5 sink
@@ -84,7 +81,7 @@ sbatch fit_TDS/run_fit_parallel.sh 5 sink
 
 ## Sensitivity tests
 
-The robustness of the five-state solution with respect to the fixed trapping and detrapping kinetic prefactors can be tested by repeating the full fit for different values of `k0` and `p0`.
+The robustness of the five-trap solution with respect to the fixed trapping and detrapping kinetic prefactors can be tested by repeating the full fit for different values of `p0`, `D0`, `Ed`.
 
 To perform the sensitivity analysis, submit the Slurm array:
 ```bash
