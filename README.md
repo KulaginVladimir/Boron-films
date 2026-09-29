@@ -104,10 +104,10 @@ To recalculate the final spectra with FESTIM and overwrite the stored calculated
 python results/compare_TDS.py --recalculate
 ```
 
-The surface-rate Arrhenius family derived from the sensitivity results can be analysed with:
+The rates of recombination on a surface derived from the sensitivity results can be analysed with:
 
 ```bash
-python results/plot_surface_pivot.py
+python results/plot_Kr.py
 ```
 
 The numerical results used for the model-order, surface-boundary, and sensitivity analyses are documented in `results/README.md`.
